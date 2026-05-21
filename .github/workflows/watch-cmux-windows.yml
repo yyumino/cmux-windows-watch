@@ -1,0 +1,28 @@
+name: Watch cmux Windows Issue
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check issue #1012 status
+        id: check
+        run: |
+          STATUS=$(curl -s \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/manaflow-ai/cmux/issues/1012 \
+            | jq -r '.state')
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: Notify Discord if closed
+        if: steps.check.outputs.status == 'closed'
+        run: |
+          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "🎉 **cmux Windows版がリリースされたかも！**\nIssue #1012 がクローズされました。\nhttps://github.com/manaflow-ai/cmux/issues/1012"
+            }'
